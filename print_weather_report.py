@@ -3,6 +3,8 @@ from dotenv import load_dotenv
 from os import getenv
 from os import system
 from datetime import datetime
+from datetime import timedelta
+from icecream import ic
 
 
 class WeatherData:
@@ -37,8 +39,14 @@ class WeatherData:
         main_data: dict = weather_data['main']
         clouds: int = weather_data['clouds']['all']
 
-        sunrise: str = datetime.fromtimestamp(weather_data['sys']['sunrise']).strftime('%H:%M')
-        sunset: str = datetime.fromtimestamp(weather_data['sys']['sunset']).strftime('%H:%M')
+        sunrise: datetime = datetime.fromtimestamp(weather_data['sys']['sunrise'])
+        sunset: datetime = datetime.fromtimestamp(weather_data['sys']['sunset'])
+
+        daylight_delta: timedelta = sunset - sunrise
+
+        daylight_hours: str = f'{str(round(daylight_delta.seconds / 3600) % 24).rjust(2, '0')}'
+        daylight_minutes: str = f'{str(round(daylight_delta.seconds / 60) % 60).rjust(2, '0')}'
+
 
         with open(filename, 'a') as file_handle:
             print(f'{header.center(center_width)}\n\20\n{'-'*45}\n\20\n{"TEMPERATURE".center(center_width)}\n\20\n'
@@ -48,7 +56,9 @@ class WeatherData:
                   f'{"EXTRA INFORMATION".center(center_width)}\n\20\n{"Humidity: ".center(center_width)}'
                   f'{main_data['humidity']}%\n{"Overcast: ".center(center_width)}{clouds}%\n\20\n'
                   f'{"Wind: ".rjust(center_width-14)}{weather_data['wind']['speed']} knots\n\20\n'
-                  f'{"Sunrise: ".center(center_width)}{sunrise}\n{"Sunset: ".center(center_width)}{sunset}\n\20\n'
+                  f'{"Sunrise: ".center(center_width)}{sunrise.strftime("%H:%M")}\n{"Sunset: ".center(center_width)}'
+                  f'{sunset.strftime("%H:%M")}\n\20\n'
+                  f'{"Daylight hours: ".center(center_width)} {daylight_hours}:{daylight_minutes}\n\20\n'
                   f'{weather_data['weather'][0]['description'].title().center(center_width)}', file=file_handle)
 
         system(f'python ./cat-printer/printer.py ./weather.txt -d -D --assume-text -A {getenv("PRINTER_MAC")}')
